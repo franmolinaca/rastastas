@@ -1,9 +1,14 @@
+
 #define __NOP __nop
 #include "msp.h"
 #include "main.hpp"
 #include "Scheduler.hpp"
 #include "Task.hpp"
 #include "LED.hpp"
+#include "HAL_OPT3001.hpp"
+
+uint16_t ADC14Result = 0U;
+
 
 uint8_t Task::m_u8NextTaskID = 0;
 volatile static uint64_t SystemTicks = 0;
@@ -43,6 +48,7 @@ void Setup(void)
 	// ****************************
 	// - P1.0 is connected to the Red LED
 	P1->DIR |= BIT0;
+	J4->DIR |= BIT37;
 
 	// ****************************
 	//       TIMER CONFIG
@@ -68,6 +74,7 @@ extern "C"
 	{
 		TIMER32_1->INTCLR = 0U;
 		P1->OUT ^= BIT0;
+		J4->OUT ^= BIT37;
 		SystemTicks++;
 		return;
 	}

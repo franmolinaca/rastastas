@@ -1,7 +1,7 @@
 ******************************************************************************
                   TI ARM Linker Unix v16.9.3                   
 ******************************************************************************
->> Linked Thu Sep 14 07:08:35 2017
+>> Linked Mon Sep 18 18:41:49 2017
 
 OUTPUT FILE NAME:   <outofbox_msp432p401r_MSP_EXP432P401R_nortos_ccs.out>
 ENTRY POINT SYMBOL: "_c_int00"  address: 00000cd5
