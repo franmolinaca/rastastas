@@ -326,21 +326,6 @@ int main(void)
                                             64,
                                             30,
                                             OPAQUE_TEXT);
-            sprintf(string, "%f", lux);
-            Graphics_drawStringCentered(&g_sContext,
-                                            (int8_t *)string,
-                                            6,
-                                            48,
-                                            70,
-                                            OPAQUE_TEXT);
-
-            sprintf(string, "lux");
-            Graphics_drawStringCentered(&g_sContext,
-                                            (int8_t *)string,
-                                            3,
-                                            86,
-                                            70,
-                                            OPAQUE_TEXT);
             break;
         default:
             Graphics_drawStringCentered(&g_sContext,
@@ -355,13 +340,10 @@ int main(void)
 
 
 
-        /* Adjust LCD Backlight
-        if (lux < 20){
-            if (lighten==0){
-                P1->OUT ^= BIT0;
-                lighten=1;
-            }
-        }
+        // Adjust LCD Backlight
+        /*if (lux < 20){
+            state = 'o';
+       }
         else if (lux < 2000){
             lighten=0;
             compareConfig_PWM.compareValue = ((500*0.1) + (lux*2))/2000 * 200;
@@ -419,41 +401,43 @@ void PORT1_IRQHandler(void)
 
 
             switch(state) {
-            case 'i':
-                state='o';
-                P1->OUT |= BIT0;
-                P2->OUT |= LedSta;
-                __delay_cycles(5000000);
-                P1->OUT ^= BIT0;
-                P2->OUT ^= LedSta;
-                __delay_cycles(5000000);
-                P1->OUT ^= BIT0;
-                P2->OUT ^= LedSta;
-                __delay_cycles(5000000);
-                P1->OUT ^= BIT0;
-                P2->OUT ^= LedSta;
-                __delay_cycles(5000000);
-                P1->OUT ^= BIT0;
-                P2->OUT ^= LedSta;
-                __delay_cycles(5000000);
-                P1->OUT ^= BIT0;
-                P2->OUT ^= LedSta;
-                __delay_cycles(5000000);
-                break;
-            case 'o':
-                state='f';
-                break;
-            case 'f':
-                state='o';
-                break;
-            default:
-                break;
+                case 'i':
+                    state='o';
+                    P1->OUT = BIT0;
+                    P2->OUT = LedSta;
+                    __delay_cycles(5000000);
+                    P1->OUT ^= BIT0;
+                    P2->OUT ^= LedSta;
+                    __delay_cycles(5000000);
+                    P1->OUT ^= BIT0;
+                    P2->OUT ^= LedSta;
+                    __delay_cycles(5000000);
+                    P1->OUT ^= BIT0;
+                    P2->OUT ^= LedSta;
+                    __delay_cycles(5000000);
+                    P1->OUT ^= BIT0;
+                    P2->OUT ^= LedSta;
+                    __delay_cycles(5000000);
+                    P1->OUT ^= BIT0;
+                    P2->OUT ^= LedSta;
+                    __delay_cycles(5000000);
+                    P1->OUT ^= BIT0;
+                    P2->OUT ^= LedSta;
+                    __delay_cycles(5000000);
+                    P1->OUT ^= BIT0;
+                    P2->OUT ^= LedSta;
+                    break;
+                case 'o':
+                    state='f';
+                    break;
+                case 'f':
+                    state='o';
+                    break;
+                default:
+                    break;
             }
 
 
-           /* MAP_Timer_A_stopTimer(TIMER_A2_BASE);
-            MAP_Timer_A_configureUpMode(TIMER_A2_BASE, &TA2upConfig);
-            MAP_Timer_A_startCounter(TIMER_A2_BASE, TIMER_A_UP_MODE);/*
 
 
             /* Start button debounce timer */
@@ -491,8 +475,12 @@ void PORT1_IRQHandler(void)
                 }
             }
             else{
+                state='o';
             }
 
+            MAP_Timer_A_stopTimer(TIMER_A2_BASE);
+            MAP_Timer_A_configureUpMode(TIMER_A2_BASE, &TA2upConfig);
+            MAP_Timer_A_startCounter(TIMER_A2_BASE, TIMER_A_UP_MODE);
 
             /* Start button debounce timer */
             MAP_Timer_A_startCounter(TIMER_A1_BASE, TIMER_A_UP_MODE);
