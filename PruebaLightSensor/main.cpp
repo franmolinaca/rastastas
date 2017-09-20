@@ -85,7 +85,19 @@ float lux;
 int lightIn=0;
 char state='i';
 int cEn=0;
-int Counter1=1;
+int Tiemp1=100;
+int Counter1=Tiemp1;
+int Counter2=0;
+int Counter3=0;
+int sumact=0;
+int sumdiez=0;
+int sumold=0;
+int sumdiff=0;
+
+
+int oldsound[50]={0};
+int actualsound[10]={0};
+
 
 /* Current color of the blinking RGB LED
  * 4 possible states: R, G, B, random color */
@@ -290,6 +302,8 @@ int main(void)
         case 'o':
             LedInd= LedSta;
             if (lightIn==0){
+                MAP_Timer_A_configureUpMode(TIMER_A2_BASE, &TA2upConfig);
+                MAP_Timer_A_startCounter(TIMER_A2_BASE, TIMER_A_UP_MODE);
                 lightIn=1;
                 if (lux > 2000){
                     state='f';
@@ -299,15 +313,17 @@ int main(void)
             }
             if (cEn==0){
                 cEn=1;
-                Counter1=0;
-                 MAP_Timer_A_stopTimer(TIMER_A2_BASE);
-                 MAP_Timer_A_configureUpMode(TIMER_A2_BASE, &TA2upConfig);
-                 MAP_Timer_A_startCounter(TIMER_A2_BASE, TIMER_A_UP_MODE);
+                Counter1=Tiemp1;
+                 //MAP_Timer_A_stopTimer(TIMER_A2_BASE);
+                 //MAP_Timer_A_configureUpMode(TIMER_A2_BASE, &TA2upConfig);
+                 //MAP_Timer_A_startCounter(TIMER_A2_BASE, TIMER_A_UP_MODE);
             }
             if (cEn==2){
                 cEn=0;
                 state='f';
             }
+            if (sumdiff>sumdiez)
+                    Counter1=Tiemp1;
 
 
 
@@ -318,6 +334,20 @@ int main(void)
                                             30,
                                             OPAQUE_TEXT);
             char string[20];
+            sprintf(string, "Off in:");
+            Graphics_drawStringCentered(&g_sContext,
+                                            (int8_t *)string,
+                                            3,
+                                            38,
+                                            50,
+                                            OPAQUE_TEXT);
+            sprintf(string, " %d ", Counter1/10 );
+            Graphics_drawStringCentered(&g_sContext,
+                                            (int8_t *)string,
+                                            6,
+                                            86,
+                                            50,
+                                            OPAQUE_TEXT);
             sprintf(string, "%f", lux);
             Graphics_drawStringCentered(&g_sContext,
                                             (int8_t *)string,
@@ -336,23 +366,30 @@ int main(void)
             sprintf(string, "Sound");
             Graphics_drawStringCentered(&g_sContext,
                                             (int8_t *)string,
-                                            3,
+                                            6,
                                             28,
                                             100,
                                             OPAQUE_TEXT);
-            sprintf(string, "%d", ADC14Result );
+            sprintf(string, " %d ", sumdiff );
             Graphics_drawStringCentered(&g_sContext,
                                             (int8_t *)string,
                                             6,
                                             86,
                                             100,
                                             OPAQUE_TEXT);
+            sprintf(string, " %d ", sumdiez );
+                        Graphics_drawStringCentered(&g_sContext,
+                                                        (int8_t *)string,
+                                                        6,
+                                                        86,
+                                                        110,
+                                                        OPAQUE_TEXT);
 
           break;
         case 'f':
             LedInd = 0;
-            Counter1=0;
-            if (std::abs(ADC14Result)>9000)
+            Counter1=Tiemp1;
+            if (sumdiff>sumdiez)
                 state='o';
             Graphics_drawStringCentered(&g_sContext,
                                             (int8_t *)"ººI´m offºº",
@@ -382,13 +419,20 @@ int main(void)
                                             28,
                                             100,
                                             OPAQUE_TEXT);
-            sprintf(string, "%d", ADC14Result );
+            sprintf(string, " %d ", sumdiff );
             Graphics_drawStringCentered(&g_sContext,
                                             (int8_t *)string,
                                             6,
                                             86,
                                             100,
                                             OPAQUE_TEXT);
+            sprintf(string, " %d ", sumdiez );
+                        Graphics_drawStringCentered(&g_sContext,
+                                                        (int8_t *)string,
+                                                        6,
+                                                        86,
+                                                        110,
+                                                        OPAQUE_TEXT);
             break;
         default:
             Graphics_drawStringCentered(&g_sContext,
@@ -539,7 +583,7 @@ void PORT1_IRQHandler(void)
                 }
             }
             if (state=='o'){
-                Counter1=0;
+                Counter1=Tiemp1;
             }
 
 
@@ -597,17 +641,43 @@ void TA2_0_IRQHandler(void)
 {
     if (cEn == 1)
     {
-        if (Counter1 < 40)
-            Counter1++;
+        if (Counter1 > 0)
+            Counter1--;
         else
         {
             cEn = 2;
-            Counter1 = 0;
+            Counter1 = Tiemp1;
             sysTickCount = 0;
             taps = 0;
-            MAP_Timer_A_stopTimer(TIMER_A2_BASE);
+            //MAP_Timer_A_stopTimer(TIMER_A2_BASE);
         }
     }
+    if (Counter3 < 50){
+        Counter3++;
+        oldsound[Counter3]=actualsound[Counter2+1];
+    }
+    else
+        Counter3 = 0;
+
+    if (Counter2 < 10){
+        Counter2++;
+        actualsound[Counter2]=ADC14Result;
+    }
+    else
+        Counter2 = 0;
+    sumact=0;
+    sumold=0;
+    for (int a=0; a<10; a++){
+            sumact+=actualsound[a];
+    }
+    for (int a=0; a<50; a++){
+            sumold+=oldsound[a];
+    }
+    sumold=sumold/50;
+    sumact=sumact/10;
+    sumdiez=sumold/10;
+    sumdiff=std::abs(sumact-sumold);
+
     MAP_Timer_A_clearCaptureCompareInterrupt(TIMER_A2_BASE,
                 TIMER_A_CAPTURECOMPARE_REGISTER_0);
 }
