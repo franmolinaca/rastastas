@@ -49,7 +49,9 @@ extern "C" {
 #include <ti/grlib/grlib.h>
 #include "HAL_I2C.h"
 #include "HAL_OPT3001.h"
+
 }
+#include <cmath>        // std::abs
 
 #include <stdio.h>
 #include "Task.hpp"
@@ -82,6 +84,8 @@ Graphics_Context g_sContext;
 float lux;
 int lightIn=0;
 char state='i';
+int cEn=0;
+int Counter1=1;
 
 /* Current color of the blinking RGB LED
  * 4 possible states: R, G, B, random color */
@@ -293,6 +297,19 @@ int main(void)
                 else
                     state='o';
             }
+            if (cEn==0){
+                cEn=1;
+                Counter1=0;
+                 MAP_Timer_A_stopTimer(TIMER_A2_BASE);
+                 MAP_Timer_A_configureUpMode(TIMER_A2_BASE, &TA2upConfig);
+                 MAP_Timer_A_startCounter(TIMER_A2_BASE, TIMER_A_UP_MODE);
+            }
+            if (cEn==2){
+                cEn=0;
+                state='f';
+            }
+
+
 
             Graphics_drawStringCentered(&g_sContext,
                                             (int8_t *)"ººEnlightenMeºº",
@@ -316,10 +333,27 @@ int main(void)
                                             86,
                                             70,
                                             OPAQUE_TEXT);
+            sprintf(string, "Sound");
+            Graphics_drawStringCentered(&g_sContext,
+                                            (int8_t *)string,
+                                            3,
+                                            28,
+                                            100,
+                                            OPAQUE_TEXT);
+            sprintf(string, "%d", ADC14Result );
+            Graphics_drawStringCentered(&g_sContext,
+                                            (int8_t *)string,
+                                            6,
+                                            86,
+                                            100,
+                                            OPAQUE_TEXT);
 
           break;
         case 'f':
             LedInd = 0;
+            Counter1=0;
+            if (std::abs(ADC14Result)>9000)
+                state='o';
             Graphics_drawStringCentered(&g_sContext,
                                             (int8_t *)"ººI´m offºº",
                                             AUTO_STRING_LENGTH,
@@ -340,6 +374,20 @@ int main(void)
                                             3,
                                             86,
                                             70,
+                                            OPAQUE_TEXT);
+            sprintf(string, "Sound");
+            Graphics_drawStringCentered(&g_sContext,
+                                            (int8_t *)string,
+                                            3,
+                                            28,
+                                            100,
+                                            OPAQUE_TEXT);
+            sprintf(string, "%d", ADC14Result );
+            Graphics_drawStringCentered(&g_sContext,
+                                            (int8_t *)string,
+                                            6,
+                                            86,
+                                            100,
                                             OPAQUE_TEXT);
             break;
         default:
@@ -490,7 +538,8 @@ void PORT1_IRQHandler(void)
                         break;
                 }
             }
-            else{
+            if (state=='o'){
+                Counter1=0;
             }
 
 
@@ -546,14 +595,14 @@ void TA1_0_IRQHandler(void)
  */
 void TA2_0_IRQHandler(void)
 {
-    if (counting == 1)
+    if (cEn == 1)
     {
-        if (count < 4)
-            count++;
+        if (Counter1 < 40)
+            Counter1++;
         else
         {
-            counting = 0;
-            count = 0;
+            cEn = 2;
+            Counter1 = 0;
             sysTickCount = 0;
             taps = 0;
             MAP_Timer_A_stopTimer(TIMER_A2_BASE);
