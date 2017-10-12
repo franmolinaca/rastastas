@@ -62,8 +62,8 @@ uint16_t ADC14Result = 0U;
 
 volatile unsigned int S1buttonDebounce = 0; // Deboounce state for button S1
 volatile unsigned int S2buttonDebounce = 0; // Deboounce state for button S1
-volatile unsigned int LedInd = BIT0; // Deboounce state for button S1
-volatile unsigned int LedSta = BIT0; // Deboounce state for button S1
+volatile unsigned int LedInd = BIT0; // Led indicator to see if the lamp is on or off
+volatile unsigned int LedSta = BIT0; // Led state to store the lamp used
 
 
 
@@ -81,23 +81,23 @@ volatile int taps = 0;               // Counts # of taps from last reset
 Graphics_Context g_sContext;
 
 /* Variable for storing lux value returned from OPT3001 */
-float lux;
-int lightIn=0;
-char state='i';
-int cEn=0;
-int Tiemp1=100;
-int Counter1=Tiemp1;
+float lux; //Stores the amount of light
+int lightIn=0; //
+char state='i'; // State machine variable
+int cEn=0; // enable the counter for the light on
+int Tiemp1=100; // 10 equals 1 second. Initial time(should be a constant)
+int Counter1=Tiemp1; //Stores the time
 int Counter2=0;
 int Counter3=0;
-int sumact=0;
-int sumdiez=0;
-int sumold=0;
-int sumdiff=0;
+int sumact=0; //Actual sum, 1 second
+int sumdiez=0; //
+int sumold=0; // 5 seconds older
+int sumdiff=0; //
 
 
 int oldsound[50]={0};
 int actualsound[10]={0};
-
+char string[20];
 
 /* Current color of the blinking RGB LED
  * 4 possible states: R, G, B, random color */
@@ -130,8 +130,8 @@ const Timer_A_UpModeConfig TA1upConfig =
 const Timer_A_UpModeConfig TA2upConfig =
 {
         TIMER_A_CLOCKSOURCE_SMCLK,              // SMCLK Clock Source
-        TIMER_A_CLOCKSOURCE_DIVIDER_64,         // SMCLK/64 ~ 46.9 kMHz
-        46875,                                  // 1s timer period
+        TIMER_A_CLOCKSOURCE_DIVIDER_64,         // SMCLK/64 ~ 46.9 kHz
+        46875,                                  // 0.1s timer period
         TIMER_A_TAIE_INTERRUPT_DISABLE,         // Disable Timer interrupt
         TIMER_A_CCIE_CCR0_INTERRUPT_ENABLE ,    // Enable CCR0 interrupt
         TIMER_A_DO_CLEAR                        // Clear value
@@ -152,14 +152,148 @@ Timer_A_CompareModeConfig compareConfig_PWM =
 
 
 
+void printON(void){
+        Graphics_drawStringCentered(&g_sContext,
+                                    (int8_t *)"ººEnlightenMeºº",
+                                    AUTO_STRING_LENGTH,
+                                    64,
+                                    30,
+                                    OPAQUE_TEXT);
+
+    sprintf(string, "Off in:");
+    Graphics_drawStringCentered(&g_sContext,
+                                    (int8_t *)string,
+                                    3,
+                                    38,
+                                    50,
+                                    OPAQUE_TEXT);
+    sprintf(string, " %d ", Counter1/10 );
+    Graphics_drawStringCentered(&g_sContext,
+                                    (int8_t *)string,
+                                    6,
+                                    86,
+                                    50,
+                                    OPAQUE_TEXT);
+    sprintf(string, "%f", lux);
+    Graphics_drawStringCentered(&g_sContext,
+                                    (int8_t *)string,
+                                    6,
+                                    48,
+                                    70,
+                                    OPAQUE_TEXT);
+
+    sprintf(string, "lux");
+    Graphics_drawStringCentered(&g_sContext,
+                                    (int8_t *)string,
+                                    3,
+                                    86,
+                                    70,
+                                    OPAQUE_TEXT);
+    sprintf(string, "Sound");
+    Graphics_drawStringCentered(&g_sContext,
+                                    (int8_t *)string,
+                                    6,
+                                    28,
+                                    100,
+                                    OPAQUE_TEXT);
+    sprintf(string, " %d ", sumdiff );
+    Graphics_drawStringCentered(&g_sContext,
+                                    (int8_t *)string,
+                                    6,
+                                    86,
+                                    100,
+                                    OPAQUE_TEXT);
+    sprintf(string, " %d ", sumdiez );
+                Graphics_drawStringCentered(&g_sContext,
+                                                (int8_t *)string,
+                                                6,
+                                                86,
+                                                110,
+                                                OPAQUE_TEXT);
+
+}
+
+
+void printOFF(){
+
+    Graphics_drawStringCentered(&g_sContext,
+                                                (int8_t *)"ººI´m offºº",
+                                                AUTO_STRING_LENGTH,
+                                                64,
+                                                30,
+                                                OPAQUE_TEXT);
+                sprintf(string, "%f", lux);
+                Graphics_drawStringCentered(&g_sContext,
+                                                (int8_t *)string,
+                                                6,
+                                                48,
+                                                70,
+                                                OPAQUE_TEXT);
+
+                sprintf(string, "lux");
+                Graphics_drawStringCentered(&g_sContext,
+                                                (int8_t *)string,
+                                                3,
+                                                86,
+                                                70,
+                                                OPAQUE_TEXT);
+                sprintf(string, "Sound");
+                Graphics_drawStringCentered(&g_sContext,
+                                                (int8_t *)string,
+                                                3,
+                                                28,
+                                                100,
+                                                OPAQUE_TEXT);
+                sprintf(string, " %d ", sumdiff );
+                Graphics_drawStringCentered(&g_sContext,
+                                                (int8_t *)string,
+                                                6,
+                                                86,
+                                                100,
+                                                OPAQUE_TEXT);
+                sprintf(string, " %d ", sumdiez );
+                            Graphics_drawStringCentered(&g_sContext,
+                                                            (int8_t *)string,
+                                                            6,
+                                                            86,
+                                                            110,
+                                                            OPAQUE_TEXT);
 
 
 
-/*
- * Main function
- */
-int main(void)
-{
+}
+
+
+void blinkss(){
+
+    P1->OUT |= BIT0;
+    P2->OUT |= LedSta;
+    __delay_cycles(5000000);
+    P1->OUT ^= BIT0;
+    P2->OUT ^= LedSta;
+    __delay_cycles(5000000);
+    P1->OUT ^= BIT0;
+    P2->OUT ^= LedSta;
+    __delay_cycles(5000000);
+    P1->OUT ^= BIT0;
+    P2->OUT ^= LedSta;
+    __delay_cycles(5000000);
+    P1->OUT ^= BIT0;
+    P2->OUT ^= LedSta;
+    __delay_cycles(5000000);
+    P1->OUT ^= BIT0;
+    P2->OUT ^= LedSta;
+    __delay_cycles(5000000);
+
+}
+
+
+
+
+void configEverything(){
+
+
+
     /* Halting WDT and disabling master interrupts */
     MAP_WDT_A_holdTimer();
     MAP_Interrupt_disableMaster();
@@ -269,10 +403,20 @@ int main(void)
 
 
 
+}
 
 
 
 
+
+
+
+/*
+ * Main function
+ */
+int main(void)
+{
+    configEverything();
 
     while(1)
     {
@@ -314,9 +458,6 @@ int main(void)
             if (cEn==0){
                 cEn=1;
                 Counter1=Tiemp1;
-                 //MAP_Timer_A_stopTimer(TIMER_A2_BASE);
-                 //MAP_Timer_A_configureUpMode(TIMER_A2_BASE, &TA2upConfig);
-                 //MAP_Timer_A_startCounter(TIMER_A2_BASE, TIMER_A_UP_MODE);
             }
             if (cEn==2){
                 cEn=0;
@@ -325,114 +466,14 @@ int main(void)
             if (sumdiff>sumdiez)
                     Counter1=Tiemp1;
 
-
-
-            Graphics_drawStringCentered(&g_sContext,
-                                            (int8_t *)"ººEnlightenMeºº",
-                                            AUTO_STRING_LENGTH,
-                                            64,
-                                            30,
-                                            OPAQUE_TEXT);
-            char string[20];
-            sprintf(string, "Off in:");
-            Graphics_drawStringCentered(&g_sContext,
-                                            (int8_t *)string,
-                                            3,
-                                            38,
-                                            50,
-                                            OPAQUE_TEXT);
-            sprintf(string, " %d ", Counter1/10 );
-            Graphics_drawStringCentered(&g_sContext,
-                                            (int8_t *)string,
-                                            6,
-                                            86,
-                                            50,
-                                            OPAQUE_TEXT);
-            sprintf(string, "%f", lux);
-            Graphics_drawStringCentered(&g_sContext,
-                                            (int8_t *)string,
-                                            6,
-                                            48,
-                                            70,
-                                            OPAQUE_TEXT);
-
-            sprintf(string, "lux");
-            Graphics_drawStringCentered(&g_sContext,
-                                            (int8_t *)string,
-                                            3,
-                                            86,
-                                            70,
-                                            OPAQUE_TEXT);
-            sprintf(string, "Sound");
-            Graphics_drawStringCentered(&g_sContext,
-                                            (int8_t *)string,
-                                            6,
-                                            28,
-                                            100,
-                                            OPAQUE_TEXT);
-            sprintf(string, " %d ", sumdiff );
-            Graphics_drawStringCentered(&g_sContext,
-                                            (int8_t *)string,
-                                            6,
-                                            86,
-                                            100,
-                                            OPAQUE_TEXT);
-            sprintf(string, " %d ", sumdiez );
-                        Graphics_drawStringCentered(&g_sContext,
-                                                        (int8_t *)string,
-                                                        6,
-                                                        86,
-                                                        110,
-                                                        OPAQUE_TEXT);
-
+            printON();
           break;
         case 'f':
             LedInd = 0;
             Counter1=Tiemp1;
-            if (sumdiff>sumdiez)
+            if (sumdiff>sumdiez&&lux<2000)
                 state='o';
-            Graphics_drawStringCentered(&g_sContext,
-                                            (int8_t *)"ººI´m offºº",
-                                            AUTO_STRING_LENGTH,
-                                            64,
-                                            30,
-                                            OPAQUE_TEXT);
-            sprintf(string, "%f", lux);
-            Graphics_drawStringCentered(&g_sContext,
-                                            (int8_t *)string,
-                                            6,
-                                            48,
-                                            70,
-                                            OPAQUE_TEXT);
-
-            sprintf(string, "lux");
-            Graphics_drawStringCentered(&g_sContext,
-                                            (int8_t *)string,
-                                            3,
-                                            86,
-                                            70,
-                                            OPAQUE_TEXT);
-            sprintf(string, "Sound");
-            Graphics_drawStringCentered(&g_sContext,
-                                            (int8_t *)string,
-                                            3,
-                                            28,
-                                            100,
-                                            OPAQUE_TEXT);
-            sprintf(string, " %d ", sumdiff );
-            Graphics_drawStringCentered(&g_sContext,
-                                            (int8_t *)string,
-                                            6,
-                                            86,
-                                            100,
-                                            OPAQUE_TEXT);
-            sprintf(string, " %d ", sumdiez );
-                        Graphics_drawStringCentered(&g_sContext,
-                                                        (int8_t *)string,
-                                                        6,
-                                                        86,
-                                                        110,
-                                                        OPAQUE_TEXT);
+                printOFF();
             break;
         default:
             Graphics_drawStringCentered(&g_sContext,
@@ -445,23 +486,6 @@ int main(void)
         }
 
 
-
-
-        /* Adjust LCD Backlight
-        if (lux < 20){
-            if (lighten==0){
-                P1->OUT ^= BIT0;
-                lighten=1;
-            }
-        }
-        else if (lux < 2000){
-            lighten=0;
-            compareConfig_PWM.compareValue = ((500*0.1) + (lux*2))/2000 * 200;
-        }
-        else
-            compareConfig_PWM.compareValue = 200;
-        */
-        Timer_A_initCompare(TIMER_A0_BASE, &compareConfig_PWM);
 
         P2->OUT = LedInd;
 
@@ -513,24 +537,7 @@ void PORT1_IRQHandler(void)
             switch(state) {
             case 'i':
                 state='o';
-                P1->OUT |= BIT0;
-                P2->OUT |= LedSta;
-                __delay_cycles(5000000);
-                P1->OUT ^= BIT0;
-                P2->OUT ^= LedSta;
-                __delay_cycles(5000000);
-                P1->OUT ^= BIT0;
-                P2->OUT ^= LedSta;
-                __delay_cycles(5000000);
-                P1->OUT ^= BIT0;
-                P2->OUT ^= LedSta;
-                __delay_cycles(5000000);
-                P1->OUT ^= BIT0;
-                P2->OUT ^= LedSta;
-                __delay_cycles(5000000);
-                P1->OUT ^= BIT0;
-                P2->OUT ^= LedSta;
-                __delay_cycles(5000000);
+                blinkss();
                 break;
             case 'o':
                 state='f';
@@ -541,12 +548,6 @@ void PORT1_IRQHandler(void)
             default:
                 break;
             }
-
-
-           /* MAP_Timer_A_stopTimer(TIMER_A2_BASE);
-            MAP_Timer_A_configureUpMode(TIMER_A2_BASE, &TA2upConfig);
-            MAP_Timer_A_startCounter(TIMER_A2_BASE, TIMER_A_UP_MODE);/*
-
 
             /* Start button debounce timer */
             MAP_Timer_A_startCounter(TIMER_A1_BASE, TIMER_A_UP_MODE);

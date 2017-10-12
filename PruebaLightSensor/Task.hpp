@@ -6,6 +6,7 @@ class Task
 {
 	public:
 		Task();
+		void printON();
 	private:
 
 	protected:
