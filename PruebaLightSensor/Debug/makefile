@@ -289,33 +289,33 @@ endif
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXE_OUTPUTS += \
-boostxl_edumkii_lightsensor_msp432p401r_MSP_EXP432P401R_nortos_ccs.out \
+EnlightenMe.out \
 
 EXE_OUTPUTS__QUOTED += \
-"boostxl_edumkii_lightsensor_msp432p401r_MSP_EXP432P401R_nortos_ccs.out" \
+"EnlightenMe.out" \
 
 BIN_OUTPUTS += \
-boostxl_edumkii_lightsensor_msp432p401r_MSP_EXP432P401R_nortos_ccs.hex \
+EnlightenMe.hex \
 
 BIN_OUTPUTS__QUOTED += \
-"boostxl_edumkii_lightsensor_msp432p401r_MSP_EXP432P401R_nortos_ccs.hex" \
+"EnlightenMe.hex" \
 
 
 # All Target
 all: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
-	@$(MAKE) --no-print-directory -Onone "boostxl_edumkii_lightsensor_msp432p401r_MSP_EXP432P401R_nortos_ccs.out"
+	@$(MAKE) --no-print-directory -Onone "EnlightenMe.out"
 
 # Tool invocations
-boostxl_edumkii_lightsensor_msp432p401r_MSP_EXP432P401R_nortos_ccs.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
+EnlightenMe.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: MSP432 Linker'
-	"/Applications/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.3.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --advice:power=none --define=__MSP432P401R__ --define=DeviceFamily_MSP432P401x -g --diag_warning=225 --diag_warning=255 --diag_wrap=off --display_error_number --gen_func_subsections=on -z -m"boostxl_edumkii_lightsensor_msp432p401r_MSP_EXP432P401R_nortos_ccs.map" --stack_size=512 -i"/Applications/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.3.LTS/lib" -i"/Applications/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.3.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="boostxl_edumkii_lightsensor_msp432p401r_MSP_EXP432P401R_nortos_ccs_linkInfo.xml" --rom_model -o "boostxl_edumkii_lightsensor_msp432p401r_MSP_EXP432P401R_nortos_ccs.out" $(ORDERED_OBJS)
+	"/Applications/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.3.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --advice:power=none --define=__MSP432P401R__ --define=DeviceFamily_MSP432P401x -g --diag_warning=225 --diag_warning=255 --diag_wrap=off --display_error_number --gen_func_subsections=on -z -m"EnlightenMe.map" --stack_size=512 -i"/Applications/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.3.LTS/lib" -i"/Applications/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.3.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="EnlightenMe_linkInfo.xml" --rom_model -o "EnlightenMe.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
-boostxl_edumkii_lightsensor_msp432p401r_MSP_EXP432P401R_nortos_ccs.hex: $(EXE_OUTPUTS)
+EnlightenMe.hex: $(EXE_OUTPUTS)
 	@echo 'Invoking: MSP432 Hex Utility'
-	"/Applications/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.3.LTS/bin/armhex"  -o "boostxl_edumkii_lightsensor_msp432p401r_MSP_EXP432P401R_nortos_ccs.hex" $(EXE_OUTPUTS__QUOTED)
+	"/Applications/ti/ccsv7/tools/compiler/ti-cgt-arm_16.9.3.LTS/bin/armhex"  -o "EnlightenMe.hex" $(EXE_OUTPUTS__QUOTED)
 	@echo 'Finished building: $@'
 	@echo ' '
 
